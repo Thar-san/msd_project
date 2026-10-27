@@ -7,7 +7,8 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
+    "predev": "node scripts/free-ports.js && npm --workspace=@compilo/shared run build",
+    "dev": "concurrently -k -n \"api,web\" -c \"blue,green\" \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm --workspace=@compilo/api run dev",
     "dev:web": "npm --workspace=@compilo/web run dev",
     "build": "npm run build --workspaces --if-present",

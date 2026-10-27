@@ -8,7 +8,7 @@ const startServer = async () => {
 
     const app = createApp();
 
-    app.listen(config.port, () => {
+    const server = app.listen(config.port, () => {
       console.log(`=========================================`);
       console.log(`Comp!lo Learn API Server Live`);
       console.log(`Port: ${config.port}`);
@@ -16,6 +16,15 @@ const startServer = async () => {
       console.log(`CORS Origin: ${config.frontendUrl}`);
       console.log(`Go Binary: ${config.go.binaryPath}`);
       console.log(`=========================================`);
+    });
+
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`[API Error] Port ${config.port} is already in use by another process.`);
+      } else {
+        console.error('[API Error]:', err);
+      }
+      process.exit(1);
     });
   } catch (error) {
     console.error('Fatal error starting server:', error);

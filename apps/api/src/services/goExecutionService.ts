@@ -1,4 +1,5 @@
 import { spawn, exec } from 'child_process';
+import fsSync from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -27,7 +28,21 @@ interface CompiledProgram {
 }
 
 export class GoExecutionService {
-  private static goBinary: string = config.go.binaryPath;
+  private static getGoBinary(): string {
+    const configured = config.go.binaryPath;
+    if (configured && fsSync.existsSync(configured)) {
+      return configured;
+    }
+    const standardPaths = [
+      'C:\\Program Files\\Go\\bin\\go.exe',
+      'C:\\Go\\bin\\go.exe',
+      path.join(os.homedir(), 'go', 'bin', 'go.exe'),
+    ];
+    for (const p of standardPaths) {
+      if (fsSync.existsSync(p)) return p;
+    }
+    return configured || 'go';
+  }
 
   /**
    * Compiles and runs a single Go program with the given stdin.
@@ -102,7 +117,7 @@ export class GoExecutionService {
 
     const binaryName = process.platform === 'win32' ? 'program.exe' : 'program';
     const build = await this.runProcess(
-      this.goBinary,
+      this.getGoBinary(),
       ['build', '-o', binaryName, 'main.go'],
       workDir,
       '',
