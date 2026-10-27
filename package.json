@@ -16,6 +16,7 @@
     "seed": "npm --workspace=@compilo/api run seed"
   },
   "devDependencies": {
+    "@esbuild/win32-x64": "0.28.2",
     "concurrently": "^9.1.2",
     "typescript": "^5.7.3"
   }
