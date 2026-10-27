@@ -33,8 +33,14 @@ export const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginInput) => {
     setSubmitting(true);
     try {
-      await login(data);
-      navigate(from, { replace: true });
+      const loggedUser = await login(data);
+      if (location.state?.from?.pathname) {
+        navigate(location.state.from.pathname, { replace: true });
+      } else if (loggedUser?.role === 'admin' || loggedUser?.role === 'superadmin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch {
       // Handled in AuthContext
     } finally {

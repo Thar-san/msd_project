@@ -1,10 +1,12 @@
 import { createApp } from './app';
 import { connectDatabase } from './config/db';
 import { config } from './config';
+import { ensureAdminUser } from './services/ensureAdmin';
 
 const startServer = async () => {
   try {
     await connectDatabase();
+    await ensureAdminUser();
 
     const app = createApp();
 

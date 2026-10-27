@@ -8,7 +8,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (data: LoginInput) => Promise<void>;
+  login: (data: LoginInput) => Promise<IUser>;
   register: (data: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -36,11 +36,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (input: LoginInput) => {
+  const login = async (input: LoginInput): Promise<IUser> => {
     try {
       const res = await ApiClient.post<{ user: IUser; token: string }>('/auth/login', input);
       setUser(res.user);
       success(`Welcome back, ${res.user.name}!`);
+      return res.user;
     } catch (err: any) {
       error(err.message || 'Login failed. Please check credentials.');
       throw err;
