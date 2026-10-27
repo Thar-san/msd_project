@@ -181,3 +181,12 @@ pre, code, kbd, samp, .monaco-editor {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Protected course content */
+.course-protected {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+

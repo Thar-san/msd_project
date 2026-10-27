@@ -19,12 +19,19 @@ import {
   History,
   Lightbulb,
   Check,
+  ShieldAlert,
 } from 'lucide-react';
+import { useCourseCopyPasteProtection } from '../../hooks/useCourseCopyPasteProtection';
 
 export const CodingAssignmentPage: React.FC = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { theme } = useTheme();
   const { success, error, info } = useToast();
+
+  useCourseCopyPasteProtection({
+    enabled: true,
+    message: 'Copy and paste are disabled in assignments to ensure authentic problem solving.',
+  });
 
   const [assignment, setAssignment] = useState<any>(null);
   const [code, setCode] = useState('');
@@ -39,6 +46,71 @@ export const CodingAssignmentPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+
+  const handleEditorDidMount = (editor: any) => {
+    // Disable context menu inside Monaco to prevent right click -> Paste
+    editor.updateOptions({
+      contextmenu: false,
+    });
+
+    // Intercept keyboard shortcuts in Monaco editor
+    editor.onKeyDown((e: any) => {
+      const isModifier = e.ctrlKey || e.metaKey;
+      const key = e.browserEvent?.key?.toLowerCase();
+      const codeKey = e.code;
+
+      // Block Paste: Ctrl+V, Cmd+V, Shift+Insert
+      if ((isModifier && (codeKey === 'KeyV' || key === 'v')) || (e.shiftKey && codeKey === 'Insert')) {
+        e.preventDefault();
+        e.stopPropagation();
+        error('Pasting code is not allowed in assignments. Please type your code manually.');
+      }
+      // Block Copy: Ctrl+C, Cmd+C, Ctrl+Insert
+      else if ((isModifier && (codeKey === 'KeyC' || key === 'c')) || (isModifier && codeKey === 'Insert')) {
+        e.preventDefault();
+        e.stopPropagation();
+        error('Copying code is not allowed in assignments.');
+      }
+      // Block Cut: Ctrl+X, Cmd+X
+      else if (isModifier && (codeKey === 'KeyX' || key === 'x')) {
+        e.preventDefault();
+        e.stopPropagation();
+        error('Cutting code is not allowed in assignments.');
+      }
+    });
+
+    // Intercept DOM paste and copy events on the editor container
+    const domNode = editor.getDomNode();
+    if (domNode) {
+      domNode.addEventListener(
+        'paste',
+        (e: ClipboardEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          error('Pasting code is not allowed in assignments. Please type your code manually.');
+        },
+        true
+      );
+      domNode.addEventListener(
+        'copy',
+        (e: ClipboardEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          error('Copying is not allowed in assignments.');
+        },
+        true
+      );
+      domNode.addEventListener(
+        'cut',
+        (e: ClipboardEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          error('Cutting is not allowed in assignments.');
+        },
+        true
+      );
+    }
+  };
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -234,6 +306,13 @@ export const CodingAssignmentPage: React.FC = () => {
           <div className="flex-1 p-6 overflow-y-auto space-y-6 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
             {activeLeftTab === 'problem' && (
               <>
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 font-medium select-none">
+                  <ShieldAlert className="w-4 h-4 shrink-0 text-amber-500" />
+                  <span>
+                    <strong>Integrity Mode:</strong> Copying and pasting are disabled in assignments. Please type your code manually to build retention.
+                  </span>
+                </div>
+
                 <div className="space-y-2">
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">Description</h3>
                   <p className="whitespace-pre-line leading-relaxed">{assignment.description}</p>
@@ -339,12 +418,21 @@ export const CodingAssignmentPage: React.FC = () => {
         {/* Right Panel: Monaco Editor & Output/Tests Drawer */}
         <div className="lg:col-span-7 flex flex-col min-h-0 bg-slate-900">
           {/* Editor Header */}
-          <div className="bg-slate-950 text-slate-400 text-xs px-4 py-2 flex items-center justify-between border-b border-slate-800 shrink-0">
+          <div className="bg-slate-950 text-slate-400 text-xs px-4 py-2 flex items-center justify-between border-b border-slate-800 shrink-0 select-none">
             <div className="flex items-center gap-2">
               <FileCode2 className="w-4 h-4 text-brand-400" />
               <span className="font-mono text-slate-200 font-semibold">main.go</span>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">Go 1.27 • Native Runner</span>
+            <div className="flex items-center gap-3">
+              <span
+                className="text-[11px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1"
+                title="Pasting and copying code is disabled in assignments"
+              >
+                <ShieldAlert className="w-3 h-3 text-amber-400" />
+                No Copy/Paste
+              </span>
+              <span className="text-[11px] font-mono text-slate-400">Go 1.27 • Native Runner</span>
+            </div>
           </div>
 
           {/* Monaco Editor Component */}
@@ -355,6 +443,7 @@ export const CodingAssignmentPage: React.FC = () => {
               theme={theme === 'dark' ? 'vs-dark' : 'light'}
               value={code}
               onChange={(value) => setCode(value || '')}
+              onMount={handleEditorDidMount}
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
@@ -364,6 +453,7 @@ export const CodingAssignmentPage: React.FC = () => {
                 tabSize: 4,
                 insertSpaces: false, // Go idiomatic tabs
                 wordWrap: 'on',
+                contextmenu: false,
               }}
             />
           </div>

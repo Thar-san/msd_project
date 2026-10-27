@@ -41,6 +41,7 @@ import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useCourseCopyPasteProtection } from '../../hooks/useCourseCopyPasteProtection';
 import { Header } from '../common/Header';
 import { Footer } from '../common/Footer';
 import { BrandLogo } from '../common/ui';
@@ -69,6 +70,16 @@ export const LearnerLayout: React.FC = () => {
   const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null);
   const [userAnchor, setUserAnchor] = useState<null | HTMLElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isCourseRoute =
+    location.pathname.startsWith('/courses') ||
+    location.pathname.startsWith('/learn') ||
+    location.pathname.startsWith('/practice');
+
+  useCourseCopyPasteProtection({
+    enabled: isCourseRoute,
+    message: 'Copy and paste are not allowed in courses. Please practice by typing code manually.',
+  });
 
   const publicRoutes = ['/', '/login', '/register', '/forgot-password'];
   const isPublicRoute = publicRoutes.includes(location.pathname) || location.pathname.startsWith('/verify');

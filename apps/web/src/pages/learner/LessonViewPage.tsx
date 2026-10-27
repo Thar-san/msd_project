@@ -25,16 +25,21 @@ import {
   Layers,
   Compass,
 } from 'lucide-react';
+import { useCourseCopyPasteProtection } from '../../hooks/useCourseCopyPasteProtection';
 
 export const LessonViewPage: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
   const { success, error } = useToast();
 
+  useCourseCopyPasteProtection({
+    enabled: true,
+    message: 'Copy and paste are disabled in courses. Practice by typing code manually!',
+  });
+
   const [lesson, setLesson] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   // Left sidebar toggle
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -62,10 +67,8 @@ export const LessonViewPage: React.FC = () => {
     fetchLesson();
   }, [lessonId]);
 
-  const handleCopyCode = (code: string, idx: number) => {
-    navigator.clipboard.writeText(code);
-    setCopiedIndex(idx);
-    setTimeout(() => setCopiedIndex(null), 2000);
+  const handleCopyCodeAttempt = () => {
+    error('Copying course code is disabled. Type the code manually to practice and build retention!');
   };
 
   const handleMarkComplete = async () => {
@@ -260,6 +263,14 @@ export const LessonViewPage: React.FC = () => {
               </p>
             </div>
 
+            {/* Course Integrity Notice */}
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 select-none">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-amber-500" />
+              <span>
+                <strong>Course Integrity Active:</strong> Copy and paste are not allowed in course lessons. Practice typing the code examples manually to enhance learning retention.
+              </span>
+            </div>
+
             {/* Learning Objectives Callout */}
             {lesson.objectives && lesson.objectives.length > 0 && (
               <div className="card-base bg-brand-subtle/40 dark:bg-brand-900/15 border-brand-200/60 dark:border-brand-800/40 p-5 space-y-2.5">
@@ -307,18 +318,12 @@ export const LessonViewPage: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleCopyCode(ex.code, idx)}
-                        className="btn-subtle text-xs gap-1"
+                        onClick={handleCopyCodeAttempt}
+                        className="btn-subtle text-xs gap-1.5 opacity-80 hover:opacity-100"
+                        title="Copying is disabled to encourage hands-on typing"
                       >
-                        {copiedIndex === idx ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-state-success" /> Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" /> Copy Code
-                          </>
-                        )}
+                        <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">Copy Disabled</span>
                       </button>
                     </div>
 

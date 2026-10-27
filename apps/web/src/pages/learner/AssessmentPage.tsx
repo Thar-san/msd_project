@@ -15,11 +15,17 @@ import {
   RotateCcw,
   Award,
 } from 'lucide-react';
+import { useCourseCopyPasteProtection } from '../../hooks/useCourseCopyPasteProtection';
 
 export const AssessmentPage: React.FC = () => {
   const { assessmentId } = useParams<{ assessmentId: string }>();
   const navigate = useNavigate();
   const { success, error } = useToast();
+
+  useCourseCopyPasteProtection({
+    enabled: true,
+    message: 'Copying questions and pasting answers is not allowed during assessments.',
+  });
 
   const [quiz, setQuiz] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({});
@@ -169,6 +175,13 @@ export const AssessmentPage: React.FC = () => {
         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           {quiz.instructions}
         </p>
+
+        <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 select-none">
+          <ShieldAlert className="w-4 h-4 shrink-0 text-amber-500" />
+          <span>
+            <strong>Assessment Integrity Mode:</strong> Copying questions and pasting answers is strictly disabled during assessments.
+          </span>
+        </div>
       </div>
 
       {/* Results View */}
